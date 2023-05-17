@@ -6,6 +6,7 @@ using UnityEngine.InputSystem;
 public class Test1_Input : TestBase
 {
     Unit player;
+    Selector selector;
 
     float initPlayerMoveSpeed;
 
@@ -15,24 +16,24 @@ public class Test1_Input : TestBase
     {
         base.Awake();
         player = FindObjectOfType<Unit>();
+        selector = FindObjectOfType<Selector>();
     }
     private void Start()
     {
         initPlayerPos = player.transform.position;
         initPlayerMoveSpeed = player.moveSpeed;
-        Debug.Log(initPlayerPos);
+        //Debug.Log(initPlayerPos);
     }
     protected override void Test1(InputAction.CallbackContext _)
     {
         player.TargetPos = new Vector3(8, 0, 0);
-       
+
     }
 
     protected override void Test2(InputAction.CallbackContext _)
     {
-        player.transform.position = initPlayerPos;
-        player.TargetPos = Vector3.zero;
-        player.TargetPos = initPlayerPos;
+        player.transform.position = Vector3.zero;
+        player.TargetPos = player.transform.position;
         player.moveSpeed = initPlayerMoveSpeed;
     }
 
@@ -43,14 +44,13 @@ public class Test1_Input : TestBase
             player.moveSpeed = 0;
         }
         else
-        { 
+        {
             player.moveSpeed = initPlayerMoveSpeed;
         }
     }
 
     protected override void Test4(InputAction.CallbackContext obj)
     {
-        player.TargetPos = new Vector3(-3, 0, 0);
-    }
-
+        selector.CheckSelect();
+    } 
 }

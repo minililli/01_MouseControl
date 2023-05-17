@@ -1,28 +1,30 @@
 using System;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.XR;
 
 public class PlayerController : MonoBehaviour
 {
     PlayerInputActions inputActions;
-
-    //------------------------------------------¸¶¿ì½º ÀÔ·ÂÃ³¸®¿¡ ´ëÇÑ º¯¼ö
-    Vector2 startClickPos;      //¸¶¿ì½º ÁÂÅ¬¸¯ ½ÃÀÛ½Ã À§Ä¡
-    Vector2 endClickPos;        //¸¶¿ì½º ÁÂÅ¬¸¯ÀÌ ³¡³µÀ» ½Ã À§Ä¡
-    Vector2 currentMousePos;    //ÇöÀç ¸¶¿ì½º À§Ä¡
+    Camera controllerCamera;
+    //------------------------------------------ë§ˆìš°ìŠ¤ ì…ë ¥ì²˜ë¦¬ì— ëŒ€í•œ ë³€ìˆ˜
+    Vector2 startClickPos;      //ë§ˆìš°ìŠ¤ ì¢Œí´ë¦­ ì‹œì‘ì‹œ ìœ„ì¹˜
+    Vector2 endClickPos;        //ë§ˆìš°ìŠ¤ ì¢Œí´ë¦­ì´ ëë‚¬ì„ ì‹œ ìœ„ì¹˜
+    Vector2 currentMousePos;    //í˜„ì¬ ë§ˆìš°ìŠ¤ ìœ„ì¹˜
     /// <summary>
-    /// µå·¡±× ¿©ºÎ È®ÀÎ¿ë º¯¼ö
+    /// ë“œë˜ê·¸ ì—¬ë¶€ í™•ì¸ìš© ë³€ìˆ˜
     /// </summary>
     bool dragging = false;
     /// <summary>
-    /// À¯´Ö ¼±ÅÃ¿©ºÎ È®ÀÎ¿ë º¯¼ö
-    /// ture ¸é ¼±ÅÃ, false¸é ¼±ÅÃ¾ÈÇÔ
+    /// ìœ ë‹› ì„ íƒì—¬ë¶€ í™•ì¸ìš© ë³€ìˆ˜
+    /// ture ë©´ ì„ íƒ, falseë©´ ì„ íƒì•ˆí•¨
     /// </summary>
-    bool isSelectedUnit = false;
-    
-    // µå·¡±×½Ã ÇÊ¿äÇÑ ÁöÁ¡ ºĞÇØ¿ë º¯¼ö---------------------------------------
+    bool onSelect = false;
+
+    // ë“œë˜ê·¸ì‹œ í•„ìš”í•œ ì§€ì  ë¶„í•´ìš© ë³€ìˆ˜---------------------------------------
     float minX;
     float minY;
     float maxX;
@@ -30,27 +32,27 @@ public class PlayerController : MonoBehaviour
 
     float width;
     float height;
-   
-    //»ç¿ëµÈ µ¨¸®°ÔÀÌÆ®------------------------------------------------------
-    public Action<Unit> onSelectUnit;       //¸¶¿ì½º ÁÂÅ¬¸¯. ¼±ÅÃµÈ À¯´ÖÀÌ ÀÖÀ½À» ¾Ë¸®´Â µ¨¸®°ÔÀÌÆ®
-    public Action<Unit> onUnselectUnit;     //¸¶¿ì½º ÁÂÅ¬¸¯. ¼±ÅÃ¿¡¼­ ºüÁø À¯´ÖÀÌ ÀÖÀ½À» ¾Ë¸®´Â µ¨¸®°ÔÀÌÆ®
-    public Action<Vector3> onSetDestination; //¸¶¿ì½º ¿ìÅ¬¸¯. À¯´Ö ¼±ÅÃ ÈÄ À¯´Ö ¹Ì¼±ÅÃ½Ã À§Ä¡ ÁöÁ¤À» ¾Ë¸®´Â µ¨¸®°ÔÀÌÆ®
-    public Action<Unit> onAttackTarget;     //¸¶¿ì½º ¿ìÅ¬¸¯. À¯´Ö¼±ÅÃ ÈÄ (Àû)À¯´Ö ¼±ÅÃ½Ã °ø°İÅ¸°ÙÁöÁ¤ÀÓÀ» ¾Ë¸®´Â µ¨¸®°ÔÀÌÆ®
-    
-    //À¯´Ö °ü·Ã-------------------------------------------------------------
-    int Unitsize = 12;      //ÃÖ´ë ¼±ÅÃ°¡´ÉÇÑ À¯´Ö¼ö
-    List<Unit> UnitList;    //¼±ÅÃµÈ À¯´Öµé¸ñ·Ï (ºÎ´ë_ÃÖ´ë UnitSize)
-    Unit unit;              //¼±ÅÃµÈ À¯´ÖÀ» ´ãÀ» º¯¼ö
+
+    //ì‚¬ìš©ëœ ë¸ë¦¬ê²Œì´íŠ¸------------------------------------------------------
+
+    public Action<Vector3> onSetDestination; //ë§ˆìš°ìŠ¤ ìš°í´ë¦­. ìœ ë‹› ì„ íƒ í›„ ìœ ë‹› ë¯¸ì„ íƒì‹œ ìœ„ì¹˜ ì§€ì •ì„ ì•Œë¦¬ëŠ” ë¸ë¦¬ê²Œì´íŠ¸
+    public Action<GameObject> onClickUnit;
+    public Action<Unit> onAttackTarget;     //ë§ˆìš°ìŠ¤ ìš°í´ë¦­. ìœ ë‹›ì„ íƒ í›„ (ì )ìœ ë‹› ì„ íƒì‹œ ê³µê²©íƒ€ê²Ÿì§€ì •ì„ì„ ì•Œë¦¬ëŠ” ë¸ë¦¬ê²Œì´íŠ¸
+    public Action<Vector3> onDragStart; //ë“œë˜ê·¸ì‹œì‘ì‹œ startPos ì „ë‹¬í•˜ëŠ” ë¸ë¦¬ê²Œì´íŠ¸
+    public Action<Vector3> onDragEnd; //ë“œë˜ê·¸ì¢…ë£Œì‹œ EndPos ì „ë‹¬í•˜ëŠ” ë¸ë¦¬ê²Œì´íŠ¸
+
+    Unit unit;              //ì„ íƒëœ ìœ ë‹›ì„ ë‹´ì„ ë³€ìˆ˜
 
     Camera playerCamera;
-    
+
 
     private void Awake()
     {
         inputActions = new PlayerInputActions();
         unit = gameObject.GetComponent<Unit>();
+        controllerCamera = transform.GetComponentInChildren<Camera>();
     }
-   
+
     private void OnEnable()
     {
         inputActions.Player.Enable();
@@ -85,18 +87,12 @@ public class PlayerController : MonoBehaviour
         inputActions.Unit.Attack.performed -= OnAttack;
         inputActions.Unit.Enable();
     }
-
-    private void Start()
-    {
-        onSelectUnit += OnSelectUnits;
-        onUnselectUnit += OnUnselectUnits;
-    }
     private void Update()
     {
         currentMousePos = Input.mousePosition;
         Vector2 delta = currentMousePos - startClickPos;
-        //Debug.Log(currentMousePos);
-        if (dragging)
+
+        if (dragging) // ê²Œì„ì˜¤ë¸Œì íŠ¸ê°€ ì„ íƒë˜ì–´ì§€ê³  ìˆìŒì„ ì•Œë ¤ì¤Œ
         {
             float minX = startClickPos.x;
             float minY = startClickPos.y;
@@ -104,38 +100,32 @@ public class PlayerController : MonoBehaviour
             float maxY = currentMousePos.y;
 
             float width = maxX - minX;
-            float height = maxY - minY;
+            float height = minY - maxY;
 
-            Vector2 node2= new (maxX, minY);
-            Vector2 node3 = new (minX, maxY);
-
+            Vector2 node2 = new(maxX, minY);
+            Vector2 node3 = new(minX, maxY);
         }
     }
 
-    private void OnDrawGizmos()
-    {
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(startClickPos, 0.5f);
-        Gizmos.DrawWireSphere(endClickPos, 0.5f);
-
-    }
     private void OnLeftClick(InputAction.CallbackContext _)
     {
         Vector2 mousePos = Mouse.current.position.ReadValue();
-        startClickPos = mousePos;
         Ray ray = Camera.main.ScreenPointToRay(mousePos);
         if (Physics.Raycast(ray, out RaycastHit hitinfo))
         {
-            if (hitinfo.collider.gameObject.CompareTag("Unit"))
+            if (hitinfo.collider.gameObject.GetComponent<Unit>())
             {
                 dragging = false;
-                Unit hitObj = hitinfo.collider.gameObject.GetComponent<Unit>();
-                onSelectUnit?.Invoke(hitObj);
+                GameObject hitObj = hitinfo.collider.gameObject;
+                onSelect = true;
+                onClickUnit?.Invoke(hitObj);
                 Debug.Log($"hitObject : {hitObj.name}");
             }
             else
             {
-                Debug.Log("µå·¡±×ÁßÀÓ");
+                startClickPos = hitinfo.point;
+                onDragStart?.Invoke(startClickPos);
+                Debug.Log("ë“œë˜ê·¸ ì¤‘ì„");
                 dragging = true;
             }
         }
@@ -144,44 +134,37 @@ public class PlayerController : MonoBehaviour
 
     private void OnLeftEndClick(InputAction.CallbackContext _)
     {
-        Vector3 mousePos = Mouse.current.position.ReadValue();
-        Vector3 screenPos = Camera.main.WorldToScreenPoint(mousePos);
-        endClickPos = mousePos;
-
+        Vector2 mousePos = Mouse.current.position.ReadValue();
+        Ray ray = Camera.main.ScreenPointToRay(mousePos);
+        Physics.Raycast(ray, out RaycastHit hitinfo);
         if (dragging)
         {
             dragging = false;
-            Debug.Log("µå·¡±×¿Ï·á");
-            Debug.Log($"Rect Node:{startClickPos},({endClickPos.x},{startClickPos.y}),({startClickPos.x},{endClickPos.y}),{endClickPos}");
+            endClickPos = hitinfo.point;
+            onDragEnd?.Invoke(endClickPos);
+            Debug.Log("ë“œë˜ê·¸ì™„ë£Œ");
         }
     }
 
     private void OnRightClick(InputAction.CallbackContext _)
     {
         Vector3 screenPos = Mouse.current.position.ReadValue();
-        Vector3 ViewPortPos = Camera.main.ScreenToViewportPoint(screenPos);
-        Vector3 ViewToWorldPos = Camera.main.ViewportToWorldPoint(new Vector3(ViewPortPos.x, ViewPortPos.y, Camera.main.nearClipPlane));
-        
-            onSetDestination?.Invoke(ViewToWorldPos);
-        Ray ray = Camera.main.ScreenPointToRay(ViewToWorldPos);
+        Ray ray = Camera.main.ScreenPointToRay(screenPos);
+
         if (Physics.Raycast(ray, out RaycastHit hitinfo))
         {
-           /* if (hitinfo.collider.gameObject.layer == LayerMask.GetMask("Land"))
+            // Debug.Log(hitinfo.point);
+            if (hitinfo.collider.gameObject.layer == 3)
             {
-                onSetDestination?.Invoke(ViewToWorldPos);
+                onSetDestination?.Invoke(hitinfo.point);
             }
-            else if(hitinfo.collider.gameObject.layer == LayerMask.GetMask("Enemy"))
+            else if (hitinfo.collider.gameObject.layer == LayerMask.GetMask("Enemy"))
             {
                 Unit enemy = hitinfo.collider.gameObject.GetComponent<Unit>();
                 onAttackTarget?.Invoke(enemy);
-            }*/
+            }
         }
-        //Debug.Log(screenPos);
-        //Debug.Log(ViewPortPos);
-        Debug.Log($"Player Controller:{ViewToWorldPos}");
 
-        
-        //onSetDestination?.Invoke(screenPos);
     }
 
     private void OnAttack(InputAction.CallbackContext _)
@@ -206,14 +189,10 @@ public class PlayerController : MonoBehaviour
     }
 
 
-    void OnSelectUnits(Unit targetUnit)
+    private void OnDrawGizmos()
     {
-        isSelectedUnit = true;
-        UnitList = new List<Unit>(Unitsize);
-        UnitList.Add(targetUnit);
-    }
-    void OnUnselectUnits(Unit targetUnit)
-    {
-        UnitList.Remove(targetUnit);
+        Gizmos.color = Color.blue;
+        Gizmos.DrawSphere(startClickPos, 1f);
+        Gizmos.DrawSphere(endClickPos, 1f);
     }
 }
