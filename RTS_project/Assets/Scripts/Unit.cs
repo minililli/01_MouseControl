@@ -45,7 +45,8 @@ public class Unit : MonoBehaviour
 
         controller.onClickUnit += OnUnitSelected;           //유닛 선택시 실행될 함수 등록
         selector.onChangedUnits += OnUnitsSelected;         //유닛리스트 함수 등록
-        controller.onSetDestination += SetTargetPos;      //목적지 설정 델리게이트 수신시 실행할 함수등록
+        controller.onSetDestination += OnSetDestination;      //목적지 설정 델리게이트 수신시 실행할 함수등록
+        
         //변수 초기화
         TargetPos = transform.position;
         originMoveSpeed = moveSpeed;
@@ -85,7 +86,25 @@ public class Unit : MonoBehaviour
             }
         }
     }
-
+    private void OnSetDestination(Vector3 Destination)
+    {
+        if (unitsList.Count > 0)
+        {
+            foreach (var obj in unitsList)
+            {
+                if (this.gameObject == obj)
+                {
+                    TargetPos = Destination;
+                    this.transform.LookAt(TargetPos);
+                    //Debug.Log(Destination);
+                }
+            }
+        }
+        else
+        {
+            //선택된 것이 없을 땐, 아무것도 하지 않음.
+        }
+    }
     void Update()
     {
         if (selectedUnit == this.gameObject)
@@ -118,21 +137,6 @@ public class Unit : MonoBehaviour
             }
         }
 
-        void SetTargetPos(Vector3 Destination)
-        {
-            if (unitsList.Count > 0)
-            {
-                foreach (var obj in unitsList)
-                {
-                    if (this.gameObject == obj)
-                    {
-                        TargetPos = Destination;
-                        this.transform.LookAt(TargetPos);
-                        //Debug.Log(Destination);
-                    }
-                }
-            }
-        }
 
         void OnDrawGizmos()
         {

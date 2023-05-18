@@ -44,7 +44,7 @@ public class Selector : MonoBehaviour
         }
     }
 
-    public void OnDrag(Vector3 startPos, Vector3 endPos)
+    public void OnDrag(Vector3 startPos, Vector3 endPos)    //5/18
     {
         float minX = startClickPos.x;
         float minY = startClickPos.y;
@@ -60,6 +60,7 @@ public class Selector : MonoBehaviour
         Vector3 Center = new Vector3(centerX, centerY, centerZ);
 
         Collider[] dragColliders = Physics.OverlapBox(Center, transform.localScale * 0.5f, transform.rotation, 6);
+
         foreach(var col in dragColliders)
         {
             OnSelect(col.gameObject);
@@ -69,13 +70,21 @@ public class Selector : MonoBehaviour
 
     public void OnSelect(GameObject SelectedUnit)
     { 
-        if (unitsList.Count < unitSize)
+        if (unitsList.Count <= unitSize)
         {
             if (!UnitsList.Contains(SelectedUnit))
             {
                 UnitsList.Add(SelectedUnit);
                 onChangedUnits?.Invoke(unitsList);
             }
+            else
+            {
+                //아무것도 하지 않음.
+            }
+        }
+        else
+        {
+            // 리스트가 꽉찼으면, 아무것도 하지 않음.
         }
     }
 

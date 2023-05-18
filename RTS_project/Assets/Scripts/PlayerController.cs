@@ -35,8 +35,8 @@ public class PlayerController : MonoBehaviour
 
     //사용된 델리게이트------------------------------------------------------
 
-    public Action<Vector3> onSetDestination; //마우스 우클릭. 유닛 선택 후 유닛 미선택시 위치 지정을 알리는 델리게이트
     public Action<GameObject> onClickUnit;
+    public Action<Vector3> onSetDestination; //마우스 우클릭. 유닛 선택 후 유닛 미선택시 위치 지정을 알리는 델리게이트
     public Action<Unit> onAttackTarget;     //마우스 우클릭. 유닛선택 후 (적)유닛 선택시 공격타겟지정임을 알리는 델리게이트
     public Action<Vector3> onDragStart; //드래그시작시 startPos 전달하는 델리게이트
     public Action<Vector3> onDragEnd; //드래그종료시 EndPos 전달하는 델리게이트
