@@ -11,9 +11,9 @@ public class PlayerController : MonoBehaviour
     PlayerInputActions inputActions;
     Camera controllerCamera;
     //------------------------------------------마우스 입력처리에 대한 변수
-    Vector2 startClickPos;      //마우스 좌클릭 시작시 위치
-    Vector2 endClickPos;        //마우스 좌클릭이 끝났을 시 위치
-    Vector2 currentMousePos;    //현재 마우스 위치
+    Vector3 startClickPos;      //마우스 좌클릭 시작시 위치
+    Vector3 endClickPos;        //마우스 좌클릭이 끝났을 시 위치
+    Vector3 currentMousePos;    //현재 마우스 위치
     /// <summary>
     /// 드래그 여부 확인용 변수
     /// </summary>
@@ -39,6 +39,7 @@ public class PlayerController : MonoBehaviour
     public Action<Vector3> onSetDestination; //마우스 우클릭. 유닛 선택 후 유닛 미선택시 위치 지정을 알리는 델리게이트
     public Action<Unit> onAttackTarget;     //마우스 우클릭. 유닛선택 후 (적)유닛 선택시 공격타겟지정임을 알리는 델리게이트
     public Action<Vector3> onDragStart; //드래그시작시 startPos 전달하는 델리게이트
+    //public Action<Vector3> onDragging; //드래그중임을 알리는 델리게이트
     public Action<Vector3> onDragEnd; //드래그종료시 EndPos 전달하는 델리게이트
 
     Unit unit;              //선택된 유닛을 담을 변수
@@ -96,14 +97,29 @@ public class PlayerController : MonoBehaviour
         {
             float minX = startClickPos.x;
             float minY = startClickPos.y;
+            float minZ = startClickPos.z;
+
             float maxX = currentMousePos.x;
             float maxY = currentMousePos.y;
+            float maxZ = currentMousePos.z;
 
-            float width = maxX - minX;
-            float height = minY - maxY;
 
-            Vector2 node2 = new(maxX, minY);
-            Vector2 node3 = new(minX, maxY);
+            float centerX = (maxX - minX) * 0.5f;
+            float centerY = (minY - maxY) * 0.5f;
+            float centerZ = (minZ - maxZ) * 0.5f;
+
+            Vector3 Center = new Vector3(centerX, centerY, centerZ);
+
+            //onDragging?.Invoke(currentMousePos);
+            if (endClickPos != null)
+            {
+                Collider[] dragColliders = Physics.OverlapBox(Center, transform.localScale * 0.5f, transform.rotation, 6);
+                foreach (var col in dragColliders)
+                {
+                    onClickUnit?.Invoke(col.gameObject);
+                }
+
+            }
         }
     }
 

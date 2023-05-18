@@ -37,14 +37,18 @@ public class Selector : MonoBehaviour
     {
         controller.onDragStart = (pos) => startClickPos = pos;
         controller.onDragEnd = (pos) => endClickPos = pos;
+        //controller.onDragging += OnDrag;
         foreach (Unit unit in units)
         {
             unit.onSelectUnit += OnSelect;
             unit.onUnselectUnit += OnUnSelect;
         }
     }
-
-    public void OnDrag(Vector3 startPos, Vector3 endPos)    //5/18
+    private void Update()
+    {
+        
+    }
+    public void OnDrag(Vector3 currentClickPos)    //5/18
     {
         float minX = startClickPos.x;
         float minY = startClickPos.y;
@@ -53,23 +57,13 @@ public class Selector : MonoBehaviour
         float maxY = endClickPos.y;
         float maxZ = endClickPos.z;
 
-        float centerX = (maxX - minX) * 0.5f;
-        float centerY = (minY - maxY) * 0.5f;
-        float centerZ = (minZ - maxZ) * 0.5f;
 
-        Vector3 Center = new Vector3(centerX, centerY, centerZ);
-
-        Collider[] dragColliders = Physics.OverlapBox(Center, transform.localScale * 0.5f, transform.rotation, 6);
-
-        foreach(var col in dragColliders)
-        {
-            OnSelect(col.gameObject);
-        }
+       
     }
 
 
     public void OnSelect(GameObject SelectedUnit)
-    { 
+    {
         if (unitsList.Count <= unitSize)
         {
             if (!UnitsList.Contains(SelectedUnit))

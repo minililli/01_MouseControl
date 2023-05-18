@@ -46,7 +46,7 @@ public class Unit : MonoBehaviour
         controller.onClickUnit += OnUnitSelected;           //유닛 선택시 실행될 함수 등록
         selector.onChangedUnits += OnUnitsSelected;         //유닛리스트 함수 등록
         controller.onSetDestination += OnSetDestination;      //목적지 설정 델리게이트 수신시 실행할 함수등록
-        
+
         //변수 초기화
         TargetPos = transform.position;
         originMoveSpeed = moveSpeed;
@@ -60,6 +60,7 @@ public class Unit : MonoBehaviour
         {
             if (unit == this.gameObject)
             {
+                this.onSelected = true;
                 Debug.Log($"Unit포함됨:{unit}");
             }
             //transform.SetParent(null);
@@ -68,7 +69,7 @@ public class Unit : MonoBehaviour
 
     private void OnUnitSelected(GameObject obj)
     {
-        selectedUnit = obj;
+        this.selectedUnit = obj;
         if (obj == this.gameObject)
         {
             if (!onSelected)
@@ -107,7 +108,7 @@ public class Unit : MonoBehaviour
     }
     void Update()
     {
-        if (selectedUnit == this.gameObject)
+        if (selectedUnit)
         {
             if (TargetPos != transform.position)
             {
@@ -119,13 +120,14 @@ public class Unit : MonoBehaviour
                 }
                 else
                 {
-                    stopDistance = 2.0f;
+                    stopDistance = 4.0f;
                 }
                 if ((TargetPos - transform.position).sqrMagnitude < stopDistance)
                 {
                     TargetPos = transform.position;
                 }
             }
+
             else if (TargetPos != transform.position)
             {
                 transform.Translate(Time.deltaTime * moveSpeed * transform.forward, Space.World);
@@ -136,16 +138,15 @@ public class Unit : MonoBehaviour
                 }
             }
         }
-
-
-        void OnDrawGizmos()
-        {
-            Gizmos.color = Color.red;
-            Vector3 from = transform.position;
-            Vector3 to = TargetPos;
-
-            Gizmos.DrawLine(from, to);
-        }
-
     }
+
+    void OnDrawGizmos()
+    {
+        Gizmos.color = Color.red;
+        Vector3 from = transform.position;
+        Vector3 to = TargetPos;
+
+        Gizmos.DrawLine(from, to);
+    }
+
 }
