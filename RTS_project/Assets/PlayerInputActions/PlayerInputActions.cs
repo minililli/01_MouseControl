@@ -53,6 +53,15 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Cancel(ESC)"",
+                    ""type"": ""Button"",
+                    ""id"": ""2a37fd73-8484-4bf4-9789-ddeafd5bb99e"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -86,6 +95,17 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": ""MK"",
                     ""action"": ""Attack"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""74878d3b-0893-44d9-a81f-fd5adf82020d"",
+                    ""path"": ""<Keyboard>/escape"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Cancel(ESC)"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -388,6 +408,7 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
         m_Player_LClick = m_Player.FindAction("LClick", throwIfNotFound: true);
         m_Player_RClick = m_Player.FindAction("RClick", throwIfNotFound: true);
         m_Player_Attack = m_Player.FindAction("Attack", throwIfNotFound: true);
+        m_Player_CancelESC = m_Player.FindAction("Cancel(ESC)", throwIfNotFound: true);
         // Unit
         m_Unit = asset.FindActionMap("Unit", throwIfNotFound: true);
         m_Unit_Attack = m_Unit.FindAction("Attack", throwIfNotFound: true);
@@ -472,6 +493,7 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_LClick;
     private readonly InputAction m_Player_RClick;
     private readonly InputAction m_Player_Attack;
+    private readonly InputAction m_Player_CancelESC;
     public struct PlayerActions
     {
         private @PlayerInputActions m_Wrapper;
@@ -479,6 +501,7 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
         public InputAction @LClick => m_Wrapper.m_Player_LClick;
         public InputAction @RClick => m_Wrapper.m_Player_RClick;
         public InputAction @Attack => m_Wrapper.m_Player_Attack;
+        public InputAction @CancelESC => m_Wrapper.m_Player_CancelESC;
         public InputActionMap Get() { return m_Wrapper.m_Player; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -497,6 +520,9 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
             @Attack.started += instance.OnAttack;
             @Attack.performed += instance.OnAttack;
             @Attack.canceled += instance.OnAttack;
+            @CancelESC.started += instance.OnCancelESC;
+            @CancelESC.performed += instance.OnCancelESC;
+            @CancelESC.canceled += instance.OnCancelESC;
         }
 
         private void UnregisterCallbacks(IPlayerActions instance)
@@ -510,6 +536,9 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
             @Attack.started -= instance.OnAttack;
             @Attack.performed -= instance.OnAttack;
             @Attack.canceled -= instance.OnAttack;
+            @CancelESC.started -= instance.OnCancelESC;
+            @CancelESC.performed -= instance.OnCancelESC;
+            @CancelESC.canceled -= instance.OnCancelESC;
         }
 
         public void RemoveCallbacks(IPlayerActions instance)
@@ -789,6 +818,7 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
         void OnLClick(InputAction.CallbackContext context);
         void OnRClick(InputAction.CallbackContext context);
         void OnAttack(InputAction.CallbackContext context);
+        void OnCancelESC(InputAction.CallbackContext context);
     }
     public interface IUnitActions
     {
