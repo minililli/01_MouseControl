@@ -23,11 +23,12 @@ public class Unit : MonoBehaviour, IUnitStatus
 
     protected float stopDistance = 0.01f;                     // 멈춤을 인정하는 거리제곱
     protected bool onMove = false;                            // 이동중임을 나타내는 변수
+    
     Vector3 targetPos;                              // 이동하려는 위치(목표지점)
     public Vector3 TargetPos                        // 이동하려는 위치(목표지점)프로퍼티
     {
         get => targetPos;
-        set
+        protected set
         {
             value.y = this.transform.position.y;
             targetPos = value;
@@ -36,8 +37,8 @@ public class Unit : MonoBehaviour, IUnitStatus
 
 
     // Stat관련 ------------------------------------------------------------
-
-    float currentHp;
+   
+    public float currentHp;
     public float maxHp = 100f;
     float currentMp;
     public float maxMp = 100f;
@@ -53,10 +54,11 @@ public class Unit : MonoBehaviour, IUnitStatus
         get => currentHp;
         set
         {
+            currentHp = value;
             Mathf.Clamp(currentHp, 0f, maxHp);
             if (currentHp <= 0f)
             {
-                //죽음
+                OnDie();
             }
         }
     }
@@ -65,7 +67,7 @@ public class Unit : MonoBehaviour, IUnitStatus
         get => currentMp;
         set
         {
-            Mathf.Clamp(currentHp, 0f, maxMp);
+            Mathf.Clamp(currentMp, 0f, maxMp);
         }
     }
 
@@ -107,7 +109,7 @@ public class Unit : MonoBehaviour, IUnitStatus
     Transform bottomIndicator;
     //------------------------------------------------------------------------
 
-    private void Awake()
+    protected virtual void Awake()
     {
         rigid = GetComponent<Rigidbody>();
         anim = GetComponent<Animator>();
@@ -119,15 +121,20 @@ public class Unit : MonoBehaviour, IUnitStatus
         bottomIndicator = indicator.GetChild(0);
 
     }
-    void Start()
+    protected virtual void OnEnable()
+    {
+        //스태터스 초기화
+        InitializeUnitStatus();
+        Debug.Log($"currentHp : {currentHp}");
+    }
+
+    protected virtual void Start()
     {
         selector.onChangedUnits += OnUnitsSelected;         //유닛리스트 함수 등록
 
         controller.onCancel += OnUnitsCancel;               //유닛취소 함수 등록
         controller.onSetDestination += OnSetDestination;    //목적지 설정 델리게이트 수신시 실행할 함수등록
 
-        //스태터스 초기화
-        InitializeUnitStatus();
 
         //변수 초기화
         unitsList = null;
@@ -218,6 +225,8 @@ public class Unit : MonoBehaviour, IUnitStatus
     }
     void Update()
     {
+        OnUpdate();
+
         if (onSelected)
         {
             if (TargetPos != transform.position)
@@ -228,9 +237,13 @@ public class Unit : MonoBehaviour, IUnitStatus
                 {
                     stopDistance = 0.25f;
                 }
-                else
+                else if(unitsList.Count > 1 && unitsList.Count < 4)
                 {
                     stopDistance = 1f;
+                }
+                else
+                {
+                    stopDistance = 4.0f;
                 }
 
                 if ((TargetPos - transform.position).sqrMagnitude < stopDistance)
@@ -240,6 +253,8 @@ public class Unit : MonoBehaviour, IUnitStatus
                     onMove = false;
                 }
             }
+
+            OnSelcted();
         }
         else
         {
@@ -267,9 +282,11 @@ public class Unit : MonoBehaviour, IUnitStatus
                     }
                 }
             }
-
         }
+
     }
+
+   
 
     public void RefreshUnitsList()
     {
@@ -294,6 +311,15 @@ public class Unit : MonoBehaviour, IUnitStatus
             }
         }
     }
+    /// <summary>
+    /// 죽었을 때 실행될 함수
+    /// </summary>
+    private void OnDie()
+    {
+        OnOverrideDie();
+    }
+
+
     void OnDrawGizmos()
     {
         Gizmos.color = Color.red;
@@ -305,6 +331,28 @@ public class Unit : MonoBehaviour, IUnitStatus
         //stopDistance 알아보기
         Handles.color = Color.red;
         Handles.DrawWireDisc(transform.position, transform.up, stopDistance);
+
+    }
+
+    /// <summary>
+    /// 선택되었을 때 업데이트에서 실행할 덮어쓰기용 함수
+    /// </summary>
+    protected virtual void OnSelcted()
+    {
+
+    }
+    /// <summary>
+    /// 선택상관없이 업데이트에서 실행할 덮어쓰기용 함수
+    /// </summary>
+    protected virtual void OnUpdate()
+    {
+
+    }
+    /// <summary>
+    /// 죽을 떄 자식에서 실행될 함수
+    /// </summary>
+    protected virtual void OnOverrideDie()
+    {
 
     }
 

@@ -14,29 +14,21 @@ public class PlayerController : MonoBehaviour
     Vector3 startClickPos;      //마우스 좌클릭 시작시 위치
     Vector3 endClickPos;        //마우스 좌클릭이 끝났을 시 위치
     Vector3 currentMousePos;    //현재 마우스 위치
+
     /// <summary>
     /// 드래그 여부 확인용 변수
     /// </summary>
     public bool dragging = false;
+
     /// <summary>
     /// 유닛 선택여부 확인용 변수
     /// ture 면 선택, false면 선택안함
     /// </summary>
     bool onSelect = false;
 
-    // 드래그시 필요한 지점 분해용 변수---------------------------------------
-    float minX;
-    float minY;
-    float maxX;
-    float maxY;
-
-    float width;
-    float height;
-
     //사용된 델리게이트------------------------------------------------------
 
     public Action<GameObject> onClickUnit;  //마우스 좌클릭. 유닛 선택을 알리는 델리게이트
-    
     public Action<Vector3> onSetDestination; //마우스 우클릭. 유닛 선택 후 유닛 미선택시 위치 지정을 알리는 델리게이트
     public Action<Unit> onAttackTarget;     //마우스 우클릭. 유닛선택 후 (적)유닛 선택시 공격타겟지정임을 알리는 델리게이트
     public Action<Vector3> onDragStart; //드래그시작시 startPos 전달하는 델리게이트
@@ -46,7 +38,17 @@ public class PlayerController : MonoBehaviour
 
     Unit unit;              //선택된 유닛을 담을 변수
 
-    Camera playerCamera;
+    //마우스 위치를 따라올 플레이어카메라
+    Camera playerCamera;    
+
+    // 드래그시 필요한 지점 분해용 변수---------------------------------------
+    float minX;
+    float minY;
+    float maxX;
+    float maxY;
+
+    float width;
+    float height;
 
 
     private void Awake()
@@ -95,7 +97,8 @@ public class PlayerController : MonoBehaviour
     }
     private void Update()
     {
-        if (dragging) // 게임오브젝트가 선택되어지고 있음을 알려줌
+        // 게임오브젝트가 선택되어지고 있음을 알려줌
+        if (dragging) 
         {
             onDragging?.Invoke(Input.mousePosition);
         }

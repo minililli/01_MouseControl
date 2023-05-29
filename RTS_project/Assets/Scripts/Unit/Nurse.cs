@@ -5,10 +5,10 @@ using UnityEngine;
 
 public class Nurse : Unit
 {
-    public float healRange = 5.0f;    //회복물체 추적 반경
-    public float interval = 0.2f;
-    public LayerMask targetLayer;
+    public float healRange = 3.0f;    //회복물체 추적 반경
+    public float interval = 0.5f;
     WaitForSeconds healInterval;
+
     GameObject target;          //힐 대상
     float healAmount = 10f;   //힐량
     public float HealAmount
@@ -19,63 +19,84 @@ public class Nurse : Unit
             healAmount = value;
         }
     }
-
-    private void Awake()
+    bool chase = false;
+    protected override void Awake()
     {
+        base.Awake();
         healInterval = new WaitForSeconds(interval);
     }
 
-    private void Start()
+    protected override void Start()
     {
-        
+        base.Start();
+        StartCoroutine(OnHeal(FindPatient(healRange)));
     }
-    private void Update()
+
+    /// <summary>
+    /// 선택상관없이 Update()에서 실행될 함수
+    /// </summary>
+    protected override void OnUpdate()
     {
-        if(!onMove)
+
+        FindPatient(healRange);
+
+        if (this.TargetPos == transform.position && target != null)
         {
-            FindPatient(healRange);
+            chase = true;
+            TargetPos = this.target.transform.position;
+            transform.LookAt(TargetPos);
+            
         }
     }
+
     private Unit FindPatient(float radius)
     {
-        Collider[] colliders = Physics.OverlapSphere(transform.position, radius, targetLayer);
-        float distSqr = Vector3.SqrMagnitude(transform.position - colliders[0].transform.position);
+        Unit patient = null;
+        Collider[] colliders = Physics.OverlapSphere(transform.position, radius, LayerMask.GetMask("Unit"));
+        List<Unit> targets = new List<Unit>(colliders.Length);
         foreach (var col in colliders)
         {
-            float distanceSqr = Vector3.SqrMagnitude(transform.position - col.transform.position);
-            if (distSqr < distanceSqr)
+            Unit tmp = col.GetComponent<Unit>();
+            if (tmp != this && tmp.HP < tmp.maxHp)
             {
-                target = colliders[0].gameObject;
-            }
-            else
-            {
-                target = col.gameObject;
+                targets.Add(tmp);
+                Debug.Log(tmp);
             }
         }
-        Unit unit = target.GetComponent<Unit>();
-        return unit;
-    }
-
-    IEnumerator OnHealUnit(Unit target)
-    {
-        while (target != null && target.HP < target.maxHp)
+        if (targets.Count > 0)
         {
-            TargetPos = target.transform.position;
-            if ((TargetPos - transform.position).sqrMagnitude < 1f)
+
+            float result = (transform.position - targets[0].transform.position).sqrMagnitude;
+            int calIndex = 0;
+            for (int i = 0; i < targets.Count; i++)
             {
-                TargetPos = transform.position;
+                float cal = (transform.position - targets[i].transform.position).sqrMagnitude;
+                if (result > cal)
+                {
+                    result = cal;
+                    calIndex = i;
+                }
             }
-            yield return null;
-            StartCoroutine(Heal(target));
+            patient = targets[calIndex];
+            target = patient.gameObject;
         }
+        return patient;
     }
 
-    IEnumerator Heal(Unit target)
+    IEnumerator OnHeal(Unit patient)
     {
-        while (target.HP < target.maxHp)
+        if (chase)
         {
-            target.HP += healAmount;
-            yield return healInterval;
+            while (patient.HP < patient.maxHp)
+            {
+                Debug.Log($"Heal중임 : +{healAmount}");
+                patient.HP += healAmount;
+                yield return healInterval;
+            }
+        }
+        else
+        {
+            StopCoroutine(OnHeal(patient));
         }
     }
 

@@ -26,14 +26,14 @@ public class Test1_Input : TestBase
     }
     protected override void Test1(InputAction.CallbackContext _)
     {
-        player.TargetPos = new Vector3(8, 0, 0);
+        //player.TargetPos = new Vector3(8, 0, 0);
 
     }
 
     protected override void Test2(InputAction.CallbackContext _)
     {
         player.transform.position = Vector3.zero;
-        player.TargetPos = player.transform.position;
+        //player.TargetPos = player.transform.position;
         player.MoveSpeed = initPlayerMoveSpeed;
     }
 

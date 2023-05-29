@@ -46,8 +46,11 @@ public class Selector : MonoBehaviour
         controller.onCancel += OnSelectCancel;
 
     }
-
-    public void OnDrag(Vector3 cursorPos)    //5/18
+    /// <summary>
+    /// 드래그 중일 때의 처리될 유닛 확인용 함수
+    /// </summary>
+    /// <param name="cursorPos">현재 마우스 커서의 위치</param>
+    public void OnDrag(Vector3 cursorPos)    
     {
         onDrag = true;
         float minX = startClickPos.x;
@@ -62,11 +65,7 @@ public class Selector : MonoBehaviour
         float maxY = currentMousePos.y;
         float maxZ = currentMousePos.z;
 
-        //float centerX = (maxX - minX) * 0.5f;
-        //float centerY = (minY - maxY) * 0.5f;
-        //float centerZ = (minZ - maxZ) * 0.5f;
-        //
-        //Vector3 Center = new Vector3(centerX, centerY, centerZ);
+       // 게임 내 모든 유닛 찾아놓기
         foreach (var obj in allUnits)
         {
             if (minX < obj.transform.position.x && obj.transform.position.x < maxX && obj.transform.position.z > maxZ && obj.transform.position.z < minZ)
@@ -76,13 +75,17 @@ public class Selector : MonoBehaviour
         }
 
     }
-
+    /// <summary>
+    /// 선택했을 때 처리될 함수
+    /// </summary>
+    /// <param name="SelectUnit">선택된 유닛 </param>
 
     public void OnSelect(GameObject SelectUnit)
     {
         if (selectedUnitsList.Count <= unitSize)
         {
-            if(SelectedUnitsList.Contains(SelectUnit))    //선택된 유닛을 포함하면
+            //선택된 유닛을 포함하면(이중선택에 대한 처리)
+            if (SelectedUnitsList.Contains(SelectUnit))    
             {
                 OnUnSelect(SelectUnit);
             }
@@ -92,13 +95,16 @@ public class Selector : MonoBehaviour
                 onChangedUnits?.Invoke(selectedUnitsList);
             }
         }
-
+        //유닛리스트의 용량이 부족할 때
         else
         {
             Debug.Log("Full");
         }
     }
-
+    /// <summary>
+    /// 유닛 다중 선택처리하는 함수
+    /// </summary>
+    /// <param name="dragUnit"> 드래그한 유닛 </param>
     public void OnDragSelect(GameObject dragUnit)
     {
       if(selectedUnitsList.Count <= unitSize)
