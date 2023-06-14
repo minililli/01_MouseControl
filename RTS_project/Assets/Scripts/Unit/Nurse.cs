@@ -5,12 +5,13 @@ using UnityEngine;
 
 public class Nurse : Unit
 {
+    [Header("Nurse특성")]
     public float healRange = 3.0f;    //회복물체 추적 반경
-    public float interval = 0.5f;
+    public float interval = 5f;
+
     WaitForSeconds healInterval;
 
-    GameObject target;          //힐 대상
-    float healAmount = 10f;   //힐량
+    public float healAmount = 10f;   //힐량
     public float HealAmount
     {
         get => healAmount;
@@ -19,7 +20,8 @@ public class Nurse : Unit
             healAmount = value;
         }
     }
-    bool chase = false;
+    bool onAction = false;   //패시브활동 여부
+
     protected override void Awake()
     {
         base.Awake();
@@ -29,7 +31,6 @@ public class Nurse : Unit
     protected override void Start()
     {
         base.Start();
-        StartCoroutine(OnHeal(FindPatient(healRange)));
     }
 
     /// <summary>
@@ -37,18 +38,28 @@ public class Nurse : Unit
     /// </summary>
     protected override void OnUpdate()
     {
-
-        FindPatient(healRange);
-
-        if (this.TargetPos == transform.position && target != null)
+        //안움직이고, 패시브활동중이 아니면,
+        if (!onMove && !onAction)
         {
-            chase = true;
-            TargetPos = this.target.transform.position;
-            transform.LookAt(TargetPos);
-            
+            Unit Target = FindPatient(healRange);
+            if (Target != null)
+            {
+                TargetPos = Target.transform.position;
+                this.transform.LookAt(TargetPos);
+                onMove = true;
+                anim.SetBool("onMove", onMove);
+                if((TargetPos-transform.position).sqrMagnitude < healRange*healRange)
+                {
+                    OnStop();
+                }
+            }
         }
     }
-
+    /// <summary>
+    /// [패시브스킬] 주변 환자 찾기
+    /// </summary>
+    /// <param name="radius">환자를 찾을 범위</param>
+    /// <returns></returns>
     private Unit FindPatient(float radius)
     {
         Unit patient = null;
@@ -63,9 +74,10 @@ public class Nurse : Unit
                 Debug.Log(tmp);
             }
         }
+        // currentHp < maxHp 인 유닛이 있을 때,
         if (targets.Count > 0)
         {
-
+            Debug.Log("target 존재");
             float result = (transform.position - targets[0].transform.position).sqrMagnitude;
             int calIndex = 0;
             for (int i = 0; i < targets.Count; i++)
@@ -78,31 +90,39 @@ public class Nurse : Unit
                 }
             }
             patient = targets[calIndex];
-            target = patient.gameObject;
         }
+        StartCoroutine(OnHeal(patient));
         return patient;
     }
 
-    IEnumerator OnHeal(Unit patient)
+    IEnumerator OnHeal(Unit target)
     {
-        if (chase)
+        if (target!=null)
         {
-            while (patient.HP < patient.maxHp)
+            while (target.HP < target.maxHp && (target.transform.position - transform.position).sqrMagnitude < healRange*healRange)
             {
+                onAction = true;
+                this.anim.SetBool("Action", onAction);
                 Debug.Log($"Heal중임 : +{healAmount}");
-                patient.HP += healAmount;
+                target.HP += healAmount;
                 yield return healInterval;
             }
+            target = null;
+            onAction = false;
         }
         else
         {
-            StopCoroutine(OnHeal(patient));
+            onAction = false;
+            StopCoroutine(OnHeal(target));
         }
+        this.anim.SetBool("Action", onAction);
     }
 
     private void OnDrawGizmos()
     {
         Handles.color = Color.green;
         Handles.DrawWireDisc(transform.position, transform.up, healRange);
+        Handles.color = Color.red;
+        Handles.DrawWireDisc(transform.position, transform.up, stopDistanceSqr);
     }
 }

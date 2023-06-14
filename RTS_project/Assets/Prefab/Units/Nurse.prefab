@@ -1199,12 +1199,12 @@ GameObject:
   m_Component:
   - component: {fileID: 4803373380695630}
   - component: {fileID: 95601168698307150}
-  - component: {fileID: 265430800}
   - component: {fileID: 5417828061015077632}
   - component: {fileID: 2083719278}
-  m_Layer: 0
+  - component: {fileID: 939679195}
+  m_Layer: 6
   m_Name: Nurse
-  m_TagString: Untagged
+  m_TagString: Unit
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1248,21 +1248,6 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &265430800
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1629728649629216}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b5eec2a27fb7dfa468dfe63197e8ffdb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  rotateSpeed: 180
-  moveSpeed: 2
-  onSelected: 0
 --- !u!54 &5417828061015077632
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -1273,7 +1258,7 @@ Rigidbody:
   serializedVersion: 2
   m_Mass: 1
   m_Drag: 0
-  m_AngularDrag: 0.05
+  m_AngularDrag: 0
   m_UseGravity: 1
   m_IsKinematic: 0
   m_Interpolate: 0
@@ -1293,6 +1278,24 @@ CapsuleCollider:
   m_Height: 2
   m_Direction: 1
   m_Center: {x: 0, y: 1, z: 0}
+--- !u!114 &939679195
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1629728649629216}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2ebc683efe0bde746a35a772b13c042c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  onSelected: 0
+  currentHp: 0
+  maxHp: 100
+  maxMp: 100
+  healRange: 3
+  interval: 0.5
 --- !u!1 &1634606147487116
 GameObject:
   m_ObjectHideFlags: 0
@@ -1812,9 +1815,21 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 4803373380695630}
     m_Modifications:
+    - target: {fileID: 240208644552885953, guid: 219edf8500ab4fc4db78237f1d9a39c8, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 9.9
+      objectReference: {fileID: 0}
     - target: {fileID: 1257013134349048236, guid: 219edf8500ab4fc4db78237f1d9a39c8, type: 3}
       propertyPath: m_Name
       value: Indicator
+      objectReference: {fileID: 0}
+    - target: {fileID: 1257013134349048236, guid: 219edf8500ab4fc4db78237f1d9a39c8, type: 3}
+      propertyPath: m_Layer
+      value: 15
+      objectReference: {fileID: 0}
+    - target: {fileID: 3649044412115278990, guid: 219edf8500ab4fc4db78237f1d9a39c8, type: 3}
+      propertyPath: m_SpriteSortPoint
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5971211752606420589, guid: 219edf8500ab4fc4db78237f1d9a39c8, type: 3}
       propertyPath: m_RootOrder
@@ -1859,6 +1874,10 @@ PrefabInstance:
     - target: {fileID: 5971211752606420589, guid: 219edf8500ab4fc4db78237f1d9a39c8, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8304940102128876544, guid: 219edf8500ab4fc4db78237f1d9a39c8, type: 3}
+      propertyPath: m_Layer
+      value: 15
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 4006739118302137475, guid: 219edf8500ab4fc4db78237f1d9a39c8, type: 3}

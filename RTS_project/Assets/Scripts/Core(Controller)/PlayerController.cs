@@ -9,7 +9,7 @@ using UnityEngine.InputSystem.XR;
 public class PlayerController : MonoBehaviour
 {
     PlayerInputActions inputActions;
-    Camera controllerCamera;
+    Camera minimapCamera;       //미니맵 카메라
     //------------------------------------------마우스 입력처리에 대한 변수
     Vector3 startClickPos;      //마우스 좌클릭 시작시 위치
     Vector3 endClickPos;        //마우스 좌클릭이 끝났을 시 위치
@@ -37,9 +37,7 @@ public class PlayerController : MonoBehaviour
     public Action onCancel;   //선택 취소를 알리는 델리게이트
 
     Unit unit;              //선택된 유닛을 담을 변수
-
-    //마우스 위치를 따라올 플레이어카메라
-    Camera playerCamera;    
+   
 
     // 드래그시 필요한 지점 분해용 변수---------------------------------------
     float minX;
@@ -55,7 +53,7 @@ public class PlayerController : MonoBehaviour
     {
         inputActions = new PlayerInputActions();
         unit = gameObject.GetComponent<Unit>();
-        controllerCamera = transform.GetComponentInChildren<Camera>();
+        minimapCamera = transform.GetComponentInChildren<Camera>();
     }
 
     private void OnEnable()
@@ -110,7 +108,7 @@ public class PlayerController : MonoBehaviour
         Ray ray = Camera.main.ScreenPointToRay(mousePos);
         if (Physics.Raycast(ray, out RaycastHit hitinfo))
         {
-            if (hitinfo.collider.gameObject.GetComponent<Unit>())
+            if (hitinfo.collider.gameObject.GetComponent<Unit>()!=null)
             {
                 dragging = false;
                 GameObject hitObj = hitinfo.collider.gameObject;
@@ -121,10 +119,9 @@ public class PlayerController : MonoBehaviour
 
             else
             {
+                dragging = true;
                 startClickPos = hitinfo.point;
                 onDragStart?.Invoke(startClickPos);
-                Debug.Log("드래그 중임");
-                dragging = true;
             }
         }
 
@@ -140,7 +137,6 @@ public class PlayerController : MonoBehaviour
             dragging = false;
             endClickPos = hitinfo.point;
             onDragEnd?.Invoke(endClickPos);
-            //Debug.Log("드래그완료");
         }
     }
 
@@ -152,9 +148,13 @@ public class PlayerController : MonoBehaviour
         if (Physics.Raycast(ray, out RaycastHit hitinfo))
         {
             // Debug.Log(hitinfo.point);
-            if (hitinfo.collider.gameObject.layer == 3)
+            if (hitinfo.collider.gameObject.layer == 3) //layer 3 = Land
             {
                 onSetDestination?.Invoke(hitinfo.point);
+
+                //Gizmos용(확인용)------------
+                where = hitinfo.point;
+                //--------------------------
             }
             else if (hitinfo.collider.gameObject.layer == LayerMask.GetMask("Enemy"))
             {
@@ -190,11 +190,14 @@ public class PlayerController : MonoBehaviour
         throw new NotImplementedException();
     }
 
+    //------------------------------테스트용 ---------------------
+    Vector3 where;
 
     private void OnDrawGizmos()
     {
         Gizmos.color = Color.blue;
         Gizmos.DrawSphere(startClickPos, 1f);
         Gizmos.DrawSphere(endClickPos, 1f);
+        Gizmos.DrawCube(where, Vector3.one);
     }
 }

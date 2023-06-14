@@ -5,25 +5,26 @@ using UnityEditor.ShaderGraph.Internal;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-public class Unit : MonoBehaviour, IUnitStatus 
+public class Unit : MonoBehaviour, IUnitStatus
 {
+    [Header("유닛관련특성")]
     //Material mat;
     protected PlayerController controller;
     protected Animator anim;
     protected Rigidbody rigid;
     protected Selector selector;
-
-    protected List<GameObject> unitsList;                   // Selector의 유닛 리스트 받아오기
+    // Selector의 유닛 리스트 받아올 유닛리스트
+    protected List<GameObject> unitsList;
 
 
     public Action<GameObject> onSelectUnit;       //마우스 좌클릭. 선택된 유닛이 있음을 알리는 델리게이트
     public Action<GameObject> onUnselectUnit;     //마우스 좌클릭. 선택에서 빠진 유닛이 있음을 알리는 델리게이트
     // ---------------------------------- 이동관련 변수
     public bool onSelected = false;                 //선택여부 확인용 변수
+    public bool onStop = false;                     //정지여부 확인용 변수
+    protected bool onMove = false;                  // 이동중임을 나타내는 변수
+    protected float stopDistanceSqr = 1f;        // 멈춤을 인정하는 거리제곱
 
-    protected float stopDistance = 0.01f;                     // 멈춤을 인정하는 거리제곱
-    protected bool onMove = false;                            // 이동중임을 나타내는 변수
-    
     Vector3 targetPos;                              // 이동하려는 위치(목표지점)
     public Vector3 TargetPos                        // 이동하려는 위치(목표지점)프로퍼티
     {
@@ -37,7 +38,7 @@ public class Unit : MonoBehaviour, IUnitStatus
 
 
     // Stat관련 ------------------------------------------------------------
-   
+
     public float currentHp;
     public float maxHp = 100f;
     float currentMp;
@@ -60,6 +61,10 @@ public class Unit : MonoBehaviour, IUnitStatus
             {
                 OnDie();
             }
+            if (currentHp > maxHp)
+            {
+                currentHp = maxHp;
+            }
         }
     }
     public float MP
@@ -72,11 +77,11 @@ public class Unit : MonoBehaviour, IUnitStatus
     }
 
     public float Power
-    { 
+    {
         get => currentPower;
         set
         {
-            currentPower=value;
+            currentPower = value;
         }
     }
     public float AttackSpeed
@@ -131,7 +136,6 @@ public class Unit : MonoBehaviour, IUnitStatus
     protected virtual void Start()
     {
         selector.onChangedUnits += OnUnitsSelected;         //유닛리스트 함수 등록
-
         controller.onCancel += OnUnitsCancel;               //유닛취소 함수 등록
         controller.onSetDestination += OnSetDestination;    //목적지 설정 델리게이트 수신시 실행할 함수등록
 
@@ -157,14 +161,14 @@ public class Unit : MonoBehaviour, IUnitStatus
                 if (unit == this.gameObject && !onSelected)
                 {
                     onSelected = true;
-                    //anim.SetBool("Click", true);
+                    indicator.GetComponent<SpriteRenderer>().color = Color.green;
                     bottomIndicator.gameObject.SetActive(true);          //바닥 선택 표시
                     Debug.Log($"Unit포함됨:{unit}");
                 }
                 else if (unit == this.gameObject && onSelected && !controller.dragging)
                 {
                     onSelected = false;
-                    //anim.SetBool("Click", false);
+                    indicator.GetComponent<SpriteRenderer>().color = Color.red;
                     bottomIndicator.gameObject.SetActive(false);          //바닥 선택 표시제거
                     Debug.Log($"Unit해제됨:{unit}");
                 }
@@ -189,8 +193,10 @@ public class Unit : MonoBehaviour, IUnitStatus
         //anim.SetBool("Click", false);
         bottomIndicator.gameObject.SetActive(false);
     }
-
-    private void InitializeUnitStatus()
+    /// <summary>
+    /// 유닛 스텟 초기화하는 함수
+    /// </summary>
+    protected virtual void InitializeUnitStatus()
     {
         HP = maxHp;
         MP = maxMp;
@@ -199,7 +205,10 @@ public class Unit : MonoBehaviour, IUnitStatus
         AttackSpeed = attackSpeed;
         Defence = defence;
     }
-
+    /// <summary>
+    /// 목적지 설정
+    /// </summary>
+    /// <param name="Destination">우클릭 한 지점(목적지)</param>
     private void OnSetDestination(Vector3 Destination)
     {
         if (unitsList != null && !controller.dragging)
@@ -213,7 +222,7 @@ public class Unit : MonoBehaviour, IUnitStatus
                         TargetPos = Destination;
                         this.transform.LookAt(TargetPos);
                         onMove = true;
-                        //Debug.Log(Destination);
+                        anim.SetBool("onMove", onMove);
                     }
                 }
             }
@@ -233,24 +242,19 @@ public class Unit : MonoBehaviour, IUnitStatus
             {
                 transform.Translate(Time.deltaTime * currentMoveSpeed * transform.forward, Space.World);
 
-                if (unitsList.Count == 1)
+                if (unitsList.Count >0 && unitsList.Count < 4)
                 {
-                    stopDistance = 0.25f;
-                }
-                else if(unitsList.Count > 1 && unitsList.Count < 4)
-                {
-                    stopDistance = 1f;
+                    stopDistanceSqr = 1f;
                 }
                 else
                 {
-                    stopDistance = 4.0f;
+                    stopDistanceSqr = 4.0f;
                 }
 
-                if ((TargetPos - transform.position).sqrMagnitude < stopDistance)
+                if ((TargetPos - transform.position).sqrMagnitude < stopDistanceSqr)
                 {
-                    TargetPos = transform.position;
-                    rigid.inertiaTensor= Vector3.zero; //유닛 혼자 회전 제어
-                    onMove = false;
+                  
+                    OnStop();
                 }
             }
 
@@ -258,42 +262,55 @@ public class Unit : MonoBehaviour, IUnitStatus
         }
         else
         {
-            if ((TargetPos - transform.position).sqrMagnitude > stopDistance)
+            if ((TargetPos - transform.position).sqrMagnitude > stopDistanceSqr)
             {
                 if (onMove)
                 {
                     transform.Translate(Time.deltaTime * currentMoveSpeed * transform.forward, Space.World);
 
-                    if ((TargetPos - transform.position).sqrMagnitude < stopDistance)
+                    if ((TargetPos - transform.position).sqrMagnitude < stopDistanceSqr)
                     {
-                        TargetPos = transform.position;
-                        rigid.inertiaTensor = Vector3.zero; //유닛 회전 제어
-                        onMove = false;
+                        OnStop(); //유닛 움직임 제어
                     }
                 }
                 else
                 {
                     transform.Translate(Time.deltaTime * currentMoveSpeed * transform.forward, Space.World);
-                    if ((TargetPos - transform.position).sqrMagnitude < stopDistance)
+                    if ((TargetPos - transform.position).sqrMagnitude < stopDistanceSqr)
                     {
-                        TargetPos = transform.position;
-                        rigid.inertiaTensor = Vector3.zero; //유닛 회전 제어
-                        onMove = false;
+                        OnStop(); //유닛 움직임 제어
                     }
                 }
             }
         }
 
     }
+    /// <summary>
+    /// 멈추는 함수
+    /// </summary>
+    protected void OnStop()
+    {
+        TargetPos = transform.position;
+        onMove = false;
+        anim.SetBool("onMove", onMove);
+        rigid.velocity = Vector3.zero;
+        rigid.angularVelocity = Vector3.zero;
+        rigid.inertiaTensor = Vector3.zero;
+    }
 
-   
+    private void OnCollisionEnter(Collision collision) 
+    {
+    }
 
+    /// <summary>
+    /// 유닛리스트 갱신하는 함수
+    /// </summary>
     public void RefreshUnitsList()
     {
         if (!unitsList.Contains(this.gameObject))
         {
             onSelected = false;
-            //anim.SetBool("Click", onSelected);
+            indicator.GetComponent<SpriteRenderer>().color = Color.red;
             bottomIndicator.gameObject.SetActive(false);          //바닥 선택 표시제거
 
         }
@@ -304,7 +321,7 @@ public class Unit : MonoBehaviour, IUnitStatus
                 if (unit == this.gameObject)
                 {
                     onSelected = true;
-                    //anim.SetBool("Click", onSelected);
+                    indicator.GetComponent<SpriteRenderer>().color = Color.green;
                     bottomIndicator.gameObject.SetActive(true);
                 }
 
@@ -317,21 +334,6 @@ public class Unit : MonoBehaviour, IUnitStatus
     private void OnDie()
     {
         OnOverrideDie();
-    }
-
-
-    void OnDrawGizmos()
-    {
-        Gizmos.color = Color.red;
-        Vector3 from = transform.position;
-        Vector3 to = TargetPos;
-
-        Gizmos.DrawLine(from, to);
-
-        //stopDistance 알아보기
-        Handles.color = Color.red;
-        Handles.DrawWireDisc(transform.position, transform.up, stopDistance);
-
     }
 
     /// <summary>
@@ -356,4 +358,18 @@ public class Unit : MonoBehaviour, IUnitStatus
 
     }
 
+    //------------------테스트용  ----------------------------
+    void OnDrawGizmos()
+    {
+        Gizmos.color = Color.red;
+        Vector3 from = transform.position;
+        Vector3 to = TargetPos;
+
+        Gizmos.DrawLine(from, to);
+
+        //stopDistance 알아보기
+        Handles.color = Color.red;
+        Handles.DrawWireDisc(transform.position, transform.up, stopDistanceSqr);
+
+    }
 }

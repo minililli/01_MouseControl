@@ -40,7 +40,11 @@ public class Selector : MonoBehaviour
     private void Start()
     {
         controller.onDragStart = (pos) => startClickPos = pos;
-        controller.onDragEnd = (pos) => endClickPos = pos;
+        controller.onDragEnd = (pos) =>
+        {
+            endClickPos = pos;
+        };
+
         controller.onDragging += OnDrag;
         controller.onClickUnit += OnSelect;
         controller.onCancel += OnSelectCancel;
@@ -50,7 +54,7 @@ public class Selector : MonoBehaviour
     /// 드래그 중일 때의 처리될 유닛 확인용 함수
     /// </summary>
     /// <param name="cursorPos">현재 마우스 커서의 위치</param>
-    public void OnDrag(Vector3 cursorPos)    
+    public void OnDrag(Vector3 cursorPos)
     {
         onDrag = true;
         float minX = startClickPos.x;
@@ -65,7 +69,10 @@ public class Selector : MonoBehaviour
         float maxY = currentMousePos.y;
         float maxZ = currentMousePos.z;
 
-       // 게임 내 모든 유닛 찾아놓기
+
+        OnSelectCancel();
+
+        // 게임 내 모든 유닛 찾아놓기
         foreach (var obj in allUnits)
         {
             if (minX < obj.transform.position.x && obj.transform.position.x < maxX && obj.transform.position.z > maxZ && obj.transform.position.z < minZ)
@@ -85,7 +92,7 @@ public class Selector : MonoBehaviour
         if (selectedUnitsList.Count <= unitSize)
         {
             //선택된 유닛을 포함하면(이중선택에 대한 처리)
-            if (SelectedUnitsList.Contains(SelectUnit))    
+            if (SelectedUnitsList.Contains(SelectUnit))
             {
                 OnUnSelect(SelectUnit);
             }
@@ -107,9 +114,9 @@ public class Selector : MonoBehaviour
     /// <param name="dragUnit"> 드래그한 유닛 </param>
     public void OnDragSelect(GameObject dragUnit)
     {
-      if(selectedUnitsList.Count <= unitSize)
+        if (selectedUnitsList.Count <= unitSize)
         {
-            if(!SelectedUnitsList.Contains(dragUnit))
+            if (!SelectedUnitsList.Contains(dragUnit))
             {
                 SelectedUnitsList.Add(dragUnit);
                 onChangedUnits?.Invoke(selectedUnitsList);
@@ -125,6 +132,11 @@ public class Selector : MonoBehaviour
         onChangedUnits?.Invoke(selectedUnitsList);
     }
 
+    public void OnSelectCancel()
+    {
+        selectedUnitsList.Clear();
+        onChangedUnits?.Invoke(selectedUnitsList);
+    }
 
     //Test용 코드--------------------------------------------------
     public void CheckSelect()
@@ -141,9 +153,5 @@ public class Selector : MonoBehaviour
         AllUnitsList.Remove(unit);
     }
 
-    public void OnSelectCancel()
-    {
-        selectedUnitsList.Clear();
-        onChangedUnits?.Invoke(selectedUnitsList);
-    }
+
 }
