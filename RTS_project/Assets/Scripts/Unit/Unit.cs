@@ -38,8 +38,8 @@ public class Unit : MonoBehaviour, IUnitStatus
 
 
     // Stat관련 ------------------------------------------------------------
-
-    public float currentHp;
+    [SerializeField]
+    float currentHp;
     public float maxHp = 100f;
     float currentMp;
     public float maxMp = 100f;
@@ -102,7 +102,11 @@ public class Unit : MonoBehaviour, IUnitStatus
     }
     public float MoveSpeed
     {
-        get => currentMoveSpeed;
+        get
+        {
+            return currentMoveSpeed;
+        }
+
         set
         {
             currentMoveSpeed = value;
@@ -221,68 +225,57 @@ public class Unit : MonoBehaviour, IUnitStatus
                     {
                         TargetPos = Destination;
                         this.transform.LookAt(TargetPos);
-                        onMove = true;
-                        anim.SetBool("onMove", onMove);
                     }
                 }
             }
             else  //선택된 유닛이 없으면,
             {
-                onMove = false;
+                OnStop();
             }
         }
     }
     void Update()
     {
         OnUpdate();
+        Vector3 dir = (TargetPos - transform.position).normalized;
+        Vector3 delta = TargetPos - transform.position;
 
-        if (onSelected)
+        if (onSelected) //선택된 유닛이라면
         {
-            if (TargetPos != transform.position)
+            OnSelcted();
+            if (TargetPos != transform.position) //목적지가 현재 위치와 다르다면,
             {
-                transform.Translate(Time.deltaTime * currentMoveSpeed * transform.forward, Space.World);
+                onMove = true;
+                transform.Translate(Time.deltaTime * MoveSpeed * dir, Space.World);
 
-                if (unitsList.Count >0 && unitsList.Count < 4)
+                if (unitsList.Count < 3)
                 {
-                    stopDistanceSqr = 1f;
+                    stopDistanceSqr = 1.0f;
                 }
                 else
                 {
-                    stopDistanceSqr = 4.0f;
+                    stopDistanceSqr = unitsList.Count % 6;
                 }
 
-                if ((TargetPos - transform.position).sqrMagnitude < stopDistanceSqr)
+                if (delta.sqrMagnitude < stopDistanceSqr)
                 {
-                  
                     OnStop();
                 }
-            }
 
-            OnSelcted();
+            }
         }
         else
         {
-            if ((TargetPos - transform.position).sqrMagnitude > stopDistanceSqr)
+            OnUnselectUnit();
+            transform.Translate(Time.deltaTime * MoveSpeed * dir, Space.World);
+            onMove = true;
+            if (delta.sqrMagnitude < stopDistanceSqr)
             {
-                if (onMove)
-                {
-                    transform.Translate(Time.deltaTime * currentMoveSpeed * transform.forward, Space.World);
-
-                    if ((TargetPos - transform.position).sqrMagnitude < stopDistanceSqr)
-                    {
-                        OnStop(); //유닛 움직임 제어
-                    }
-                }
-                else
-                {
-                    transform.Translate(Time.deltaTime * currentMoveSpeed * transform.forward, Space.World);
-                    if ((TargetPos - transform.position).sqrMagnitude < stopDistanceSqr)
-                    {
-                        OnStop(); //유닛 움직임 제어
-                    }
-                }
+                OnStop(); //유닛 움직임 제어
             }
+
         }
+        anim.SetBool("onMove", onMove);
 
     }
     /// <summary>
@@ -290,16 +283,14 @@ public class Unit : MonoBehaviour, IUnitStatus
     /// </summary>
     protected void OnStop()
     {
-        TargetPos = transform.position;
         onMove = false;
+        TargetPos = transform.position;
         anim.SetBool("onMove", onMove);
+        OnStopping();
+
         rigid.velocity = Vector3.zero;
         rigid.angularVelocity = Vector3.zero;
         rigid.inertiaTensor = Vector3.zero;
-    }
-
-    private void OnCollisionEnter(Collision collision) 
-    {
     }
 
     /// <summary>
@@ -336,6 +327,14 @@ public class Unit : MonoBehaviour, IUnitStatus
         OnOverrideDie();
     }
 
+
+    /// <summary>
+    /// 선택상관없이 업데이트에서 실행할 덮어쓰기용 함수
+    /// </summary>
+    protected virtual void OnUpdate()
+    {
+
+    }
     /// <summary>
     /// 선택되었을 때 업데이트에서 실행할 덮어쓰기용 함수
     /// </summary>
@@ -344,9 +343,16 @@ public class Unit : MonoBehaviour, IUnitStatus
 
     }
     /// <summary>
-    /// 선택상관없이 업데이트에서 실행할 덮어쓰기용 함수
+    /// 선택되지 않았을 때 업데이트에서 실행할 덮어쓰기용 함수
     /// </summary>
-    protected virtual void OnUpdate()
+    protected virtual void OnUnselectUnit()
+    {
+
+    }
+    /// <summary>
+    /// 멈춰있을 때 실행될 함수
+    /// </summary>
+    protected virtual void OnStopping()
     {
 
     }
@@ -357,6 +363,7 @@ public class Unit : MonoBehaviour, IUnitStatus
     {
 
     }
+
 
     //------------------테스트용  ----------------------------
     void OnDrawGizmos()

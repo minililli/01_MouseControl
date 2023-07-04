@@ -2,15 +2,18 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using static UnityEngine.GraphicsBuffer;
 
 public class Nurse : Unit
 {
     [Header("Nurse특성")]
+    [Tooltip("healRange = SphereCollider.raidus")]
     public float healRange = 3.0f;    //회복물체 추적 반경
     public float interval = 5f;
 
+    Coroutine healCoroutine = null;
     WaitForSeconds healInterval;
-
+    Unit healTarget=null;
     public float healAmount = 10f;   //힐량
     public float HealAmount
     {
@@ -20,38 +23,29 @@ public class Nurse : Unit
             healAmount = value;
         }
     }
-    bool onAction = false;   //패시브활동 여부
+    /// <summary>
+    /// 개별능력 여부 확인용 변수(애니메이션 관여)
+    /// </summary>
+    bool onAction = false;
 
     protected override void Awake()
     {
         base.Awake();
+
         healInterval = new WaitForSeconds(interval);
     }
 
-    protected override void Start()
-    {
-        base.Start();
-    }
 
-    /// <summary>
-    /// 선택상관없이 Update()에서 실행될 함수
-    /// </summary>
     protected override void OnUpdate()
     {
-        //안움직이고, 패시브활동중이 아니면,
         if (!onMove && !onAction)
         {
-            Unit Target = FindPatient(healRange);
-            if (Target != null)
+            healTarget = FindPatient(healRange);
+            if (healTarget != null && !onMove)
             {
-                TargetPos = Target.transform.position;
-                this.transform.LookAt(TargetPos);
-                onMove = true;
-                anim.SetBool("onMove", onMove);
-                if((TargetPos-transform.position).sqrMagnitude < healRange*healRange)
-                {
-                    OnStop();
-                }
+                TargetPos = healTarget.transform.position;
+                transform.LookAt(TargetPos);
+                healCoroutine = StartCoroutine(OnHeal(healTarget));
             }
         }
     }
@@ -70,53 +64,49 @@ public class Nurse : Unit
             Unit tmp = col.GetComponent<Unit>();
             if (tmp != this && tmp.HP < tmp.maxHp)
             {
-                targets.Add(tmp);
-                Debug.Log(tmp);
+                targets.Add(tmp);   
             }
         }
         // currentHp < maxHp 인 유닛이 있을 때,
         if (targets.Count > 0)
         {
-            Debug.Log("target 존재");
             float result = (transform.position - targets[0].transform.position).sqrMagnitude;
-            int calIndex = 0;
+            int index = 0;
             for (int i = 0; i < targets.Count; i++)
             {
-                float cal = (transform.position - targets[i].transform.position).sqrMagnitude;
-                if (result > cal)
+                float dis = (transform.position - targets[i].transform.position).sqrMagnitude;
+                if (result > dis)
                 {
-                    result = cal;
-                    calIndex = i;
+                    result = dis;
+                    index = i;
                 }
             }
-            patient = targets[calIndex];
+            patient = targets[index];
         }
-        StartCoroutine(OnHeal(patient));
         return patient;
     }
 
+
     IEnumerator OnHeal(Unit target)
     {
-        if (target!=null)
+        if (target != null)
         {
-            while (target.HP < target.maxHp && (target.transform.position - transform.position).sqrMagnitude < healRange*healRange)
+            while (target.HP < target.maxHp && (target.transform.position - transform.position).sqrMagnitude < healRange * healRange)
             {
+                transform.LookAt(target.transform.position);
                 onAction = true;
-                this.anim.SetBool("Action", onAction);
+                anim.SetBool("onAction", onAction);
                 Debug.Log($"Heal중임 : +{healAmount}");
                 target.HP += healAmount;
                 yield return healInterval;
             }
             target = null;
-            onAction = false;
         }
-        else
-        {
-            onAction = false;
-            StopCoroutine(OnHeal(target));
-        }
-        this.anim.SetBool("Action", onAction);
+        onAction = false;
+        anim.SetBool("onAction", onAction);
+        StopCoroutine(OnHeal(target));
     }
+
 
     private void OnDrawGizmos()
     {
